@@ -3,63 +3,571 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#101a27" />
-    <title>LIQORA Water Monitor</title>
+    <meta name="theme-color" content="#0f1923" />
+    <meta name="description" content="LIQORA Water Management System — real-time tank levels, pump status, flow monitoring, and diagnostics." />
+    <title>LIQORA Water Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
-    <script type="module" src="app.js"></script>
   </head>
   <body>
-    <main class="shell">
-      <header class="header">
-        <div class="logo" aria-hidden="true">L</div>
-        <div>
-          <p class="eyebrow">LIQORA · WATER MANAGEMENT</p>
-          <h1>System monitor</h1>
-        </div>
-        <span id="connectionStatus" class="connection">Connecting…</span>
-      </header>
 
-      <section class="tank-grid" aria-label="Tank levels">
-        <article class="card tank-card">
-          <div class="card-heading"><span>Sump tank</span><span class="tank-icon">S</span></div>
-          <div class="reading"><strong id="sumpLevel">—</strong><span>%</span></div>
-          <div class="meter"><span id="sumpBar"></span></div>
-          <p class="subtext">Pump safe start: 15%</p>
+    <!-- ──────────────── TOP HEADER ──────────────── -->
+    <header class="top-bar" role="banner">
+      <div class="top-bar-inner">
+        <button class="menu-btn" aria-label="Menu" id="menuBtn">
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+            <rect y="0" width="18" height="2" rx="1" fill="currentColor"/>
+            <rect y="6" width="18" height="2" rx="1" fill="currentColor"/>
+            <rect y="12" width="18" height="2" rx="1" fill="currentColor"/>
+          </svg>
+        </button>
+        <span class="page-title" id="pageTitle">Dashboard</span>
+        <div class="top-badges">
+          <span id="esp32Badge" class="badge badge-esp32" aria-live="polite">Connecting…</span>
+          <button id="demoToggle" class="badge badge-demo" aria-pressed="false">DEMO DATA</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ──────────────── TAB PAGES ──────────────── -->
+    <main id="mainContent" class="main-content" role="main">
+
+      <!-- ════════════ TAB: CONTROL (Dashboard) ════════════ -->
+      <section id="tabControl" class="tab-page active" aria-label="Dashboard overview">
+
+        <!-- System Overview card -->
+        <article class="card">
+          <div class="card-header">
+            <div class="card-icon-row">
+              <span class="card-icon card-icon--teal" aria-hidden="true">$</span>
+              <h2 class="card-title">System Overview</h2>
+            </div>
+            <div class="badge-row">
+              <span id="sysBadgeOnline" class="badge badge-outline-green">Online</span>
+              <span id="sysBadgeDemo" class="badge badge-demo-sm hidden">DEMO DATA</span>
+              <span class="badge badge-outline">⚙ Automatic Mode</span>
+            </div>
+          </div>
+          <p class="card-sub" id="lastCommText">Autonomous ESP32 supervisory node · Last communication: —</p>
+
+          <div class="metrics-grid">
+            <div class="metric-cell">
+              <span class="metric-label">ACTIVE WATER SOURCE</span>
+              <strong class="metric-value metric-value--blue" id="overviewSource">—</strong>
+              <span class="metric-hint" id="overviewSourceHint">Preferred: SUMP</span>
+            </div>
+            <div class="metric-cell">
+              <span class="metric-label">CURRENT WATER FLOW</span>
+              <strong class="metric-value" id="overviewFlowVal">—</strong>
+              <span class="metric-hint" id="overviewFlowStatus">Status: —</span>
+            </div>
+            <div class="metric-cell">
+              <span class="metric-label">TOTAL WATER PUMPED</span>
+              <strong class="metric-value" id="overviewTotalPumped">—</strong>
+              <span class="metric-hint">Today's session</span>
+            </div>
+            <div class="metric-cell">
+              <span class="metric-label">PIPELINE CONDITION</span>
+              <strong class="metric-value" id="overviewPipeline">—</strong>
+              <span class="metric-hint" id="overviewPipelineHint">—</span>
+            </div>
+          </div>
         </article>
-        <article class="card tank-card">
-          <div class="card-heading"><span>Overhead tank</span><span class="tank-icon">O</span></div>
-          <div class="reading"><strong id="ohtLevel">—</strong><span>%</span></div>
-          <div class="meter"><span id="ohtBar"></span></div>
-          <p class="subtext">Pump stops at 95%</p>
+
+        <!-- Water Management card (tanks overview) -->
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title card-title--bold">Water Management</h2>
+              <p class="card-sub">ESP32 remains autonomous. The app supervises priority, connectivity and events.</p>
+            </div>
+            <span class="badge badge-wifi" id="wifiStatusBadge" aria-live="polite">
+              <svg width="14" height="11" viewBox="0 0 14 11" fill="none" aria-hidden="true"><path d="M7 9.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm0-3.5A5.48 5.48 0 0 0 2.93 7.64l1.42 1.42A3.5 3.5 0 0 1 7 8a3.5 3.5 0 0 1 2.65 1.06l1.42-1.42A5.48 5.48 0 0 0 7 6zM7 2A9.94 9.94 0 0 0 .07 4.93l1.42 1.42A7.96 7.96 0 0 1 7 4a7.96 7.96 0 0 1 5.51 2.35l1.42-1.42A9.94 9.94 0 0 0 7 2z" fill="currentColor"/></svg>
+              Connected via Firebase
+            </span>
+          </div>
+
+          <!-- Sump tank mini card -->
+          <div class="tank-row">
+            <div class="tank-row-left">
+              <div class="tank-icon-label">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 14c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="14" width="16" height="6" rx="2" stroke="currentColor" stroke-width="2"/></svg>
+                <div>
+                  <strong class="tank-name">SUMP TANK</strong>
+                  <div class="tank-sub">Underground Storage</div>
+                </div>
+              </div>
+              <div class="tank-visual-row">
+                <div class="tank-visual">
+                  <div class="tank-fill" id="sumpFill" style="height:0%"></div>
+                </div>
+                <div class="tank-stats">
+                  <strong class="tank-pct" id="sumpLevel">—</strong>
+                  <div class="tank-litres" id="sumpLitres">— / — L</div>
+                  <div class="tank-detail">Sensor: <strong id="sumpSensorHealth" class="txt-green">—</strong></div>
+                  <div class="tank-detail">Min Safe Cutoff: 15% (Dry-run guard)</div>
+                </div>
+              </div>
+            </div>
+            <span class="badge badge-health" id="sumpHealthBadge">—</span>
+          </div>
+
+          <!-- OHT mini card -->
+          <div class="tank-row tank-row--mt">
+            <div class="tank-row-left">
+              <div class="tank-icon-label">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 18v2M15 18v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <div>
+                  <strong class="tank-name">OVERHEAD TANK (OHT)</strong>
+                  <div class="tank-sub">Rooftop Reservoir</div>
+                </div>
+              </div>
+              <div class="tank-visual-row">
+                <div class="tank-visual">
+                  <div class="tank-fill" id="ohtFill" style="height:0%"></div>
+                </div>
+                <div class="tank-stats">
+                  <strong class="tank-pct" id="ohtLevel">—</strong>
+                  <div class="tank-litres" id="ohtLitres">— / — L</div>
+                  <div class="tank-detail">Demand Signal: <strong id="ohtDemandText" class="txt-green">—</strong></div>
+                  <div class="tank-detail" id="ohtAutoFill">Auto Fill Trigger: &lt; 85%</div>
+                </div>
+              </div>
+            </div>
+            <span class="badge badge-health" id="ohtHealthBadge">—</span>
+          </div>
+        </article>
+
+        <!-- Automatic Source Priority card -->
+        <article class="card">
+          <h2 class="card-title card-title--bold">Automatic Source Priority</h2>
+          <p class="card-sub">This changes only the preferred source. The ESP32 decides whether it is safe to run.</p>
+          <div class="source-tabs">
+            <div class="source-tab source-tab--active" id="srcSumpTab">✓ SUMP</div>
+            <div class="source-tab" id="srcBoreTab">≡ BORE</div>
+          </div>
+          <div class="info-rows">
+            <div class="info-row"><span>Preferred source</span><strong id="preferredSource">SUMP</strong></div>
+            <div class="info-row"><span>Active source</span><strong id="activeSource">—</strong></div>
+            <div class="info-row"><span>Pending source</span><strong id="pendingSource">NONE</strong></div>
+            <div class="info-row"><span>OHT demand</span><strong id="ohtDemand" class="txt-green">—</strong></div>
+            <div class="info-row"><span>Current operating mode</span><strong>AUTOMATIC</strong></div>
+          </div>
+        </article>
+
+        <!-- Equipment Status card (summary) -->
+        <article class="card">
+          <h2 class="card-title card-title--bold">Equipment Status</h2>
+          <p class="card-sub">Actuator states &amp; sensor health monitored by ESP32</p>
+          <div class="equip-list">
+            <div class="equip-row">
+              <span class="equip-icon">⚡</span>
+              <strong class="equip-name">Sump pump</strong>
+              <span class="equip-state" id="equipSumpPump">—</span>
+            </div>
+            <div class="equip-row">
+              <span class="equip-icon">⊕</span>
+              <strong class="equip-name">Bore pump</strong>
+              <span class="equip-state" id="equipBorePump">—</span>
+            </div>
+            <div class="equip-row">
+              <span class="equip-icon">⇝</span>
+              <strong class="equip-name">Municipal valve</strong>
+              <span class="equip-state" id="equipMunicipalValve">—</span>
+            </div>
+            <div class="info-rows info-rows--compact">
+              <div class="info-row"><span>Sump lockout</span><strong id="equipSumpLockout">—</strong></div>
+              <div class="info-row"><span>Bore lockout</span><strong id="equipBoreLockout">—</strong></div>
+              <div class="info-row"><span>Sump sensor</span><strong id="equipSumpSensor" class="txt-green">Normal</strong></div>
+              <div class="info-row"><span>OHT sensor</span><strong id="equipOhtSensor" class="txt-green">Normal</strong></div>
+              <div class="info-row"><span>Flow sensor</span><strong id="equipFlowSensor" class="txt-green">Normal</strong></div>
+              <div class="info-row"><span>Blockage protection</span><strong id="equipBlockage" class="txt-green">Normal</strong></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Recent Events preview -->
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title card-title--bold">Recent Events</h2>
+            <button class="link-btn" id="goToEventsBtn">View all</button>
+          </div>
+          <p class="card-sub">Hardware logs &amp; autonomous notifications</p>
+          <div id="recentEventsList" class="events-list">
+            <div class="event-empty">No events recorded yet.</div>
+          </div>
+        </article>
+
+        <!-- Warning banners -->
+        <div id="warningBanners" class="warning-area" aria-live="assertive" role="status"></div>
+
+        <p class="last-updated-footer" id="lastUpdatedFooter">Waiting for data…</p>
+      </section>
+
+      <!-- ════════════ TAB: TANKS ════════════ -->
+      <section id="tabTanks" class="tab-page" aria-label="Tank telemetry" hidden>
+        <article class="card">
+          <div class="card-header">
+            <div class="card-icon-row">
+              <span class="card-icon card-icon--blue" aria-hidden="true">◯</span>
+              <h2 class="card-title">Water Storage &amp; Reservoir Telemetry</h2>
+            </div>
+            <span class="badge badge-outline-orange" id="ohtDemandBadge">—</span>
+          </div>
+          <p class="card-sub">Autonomous ultrasonic level sensors, tank capacity metrics, depletion rates, and automatic priority control.</p>
+        </article>
+
+        <!-- Sump detail card -->
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title card-title--bold">Sump Tank (Ground Storage)</h2>
+              <p class="card-sub">Primary municipal intake and reserve storage</p>
+            </div>
+            <span class="badge badge-health" id="sumpHealthBadge2">—</span>
+          </div>
+          <div class="tank-detail-row">
+            <div class="tank-visual tank-visual--lg">
+              <div class="tank-fill" id="sumpFill2" style="height:0%"></div>
+            </div>
+            <div>
+              <div class="tank-pct-lg" id="sumpLevelTanks">—</div>
+              <div class="tank-litres-lg txt-blue" id="sumpLitresTanks">— Litres Available</div>
+              <div class="detail-box">
+                <div class="info-row"><span>Water Depth:</span><strong id="sumpDepthVal">— / — cm</strong></div>
+                <div class="info-row"><span>Dry-Run Cutoff:</span><strong class="txt-orange">15% (27 cm)</strong></div>
+                <div class="info-row"><span>Sensor Health:</span><strong id="sumpSensorTanks" class="txt-green">—</strong></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- OHT detail card -->
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title card-title--bold">Overhead Tank (OHT – Rooftop)</h2>
+              <p class="card-sub">Distribution gravity feed reservoir</p>
+            </div>
+            <span class="badge badge-health" id="ohtHealthBadge2">—</span>
+          </div>
+          <div class="tank-detail-row">
+            <div class="tank-visual tank-visual--lg">
+              <div class="tank-fill" id="ohtFill2" style="height:0%"></div>
+            </div>
+            <div>
+              <div class="tank-pct-lg" id="ohtLevelTanks">—</div>
+              <div class="tank-litres-lg txt-blue" id="ohtLitresTanks">— Litres Capacity</div>
+              <div class="detail-box">
+                <div class="info-row"><span>Replenishment ETA:</span><strong id="ohtEta">—</strong></div>
+                <div class="info-row"><span>Auto-Start Pump Trigger:</span><strong>Level &lt; 85%</strong></div>
+                <div class="info-row"><span>Auto-Stop Pump Trigger:</span><strong class="txt-orange">Level ≥ 98% (Anti-overflow)</strong></div>
+              </div>
+            </div>
+          </div>
         </article>
       </section>
 
-      <section class="data-grid" aria-label="Water system status">
-        <article class="card data-card"><span class="label">Current source</span><strong id="currentSource">—</strong></article>
-        <article class="card data-card"><span class="label">Sump flow</span><strong><span id="sumpFlowRate">—</span> <small>L/min</small></strong></article>
-        <article class="card data-card"><span class="label">Borewell flow</span><strong><span id="boreFlowRate">—</span> <small>L/min</small></strong></article>
+      <!-- ════════════ TAB: PIPELINE (Equipment Status) ════════════ -->
+      <section id="tabPipeline" class="tab-page" aria-label="Equipment status and pipeline" hidden>
+        <article class="card">
+          <div class="card-header">
+            <div class="card-icon-row">
+              <span class="card-icon card-icon--blue" aria-hidden="true">⊞</span>
+              <h2 class="card-title">Equipment Telemetry &amp; Actuator Controls</h2>
+            </div>
+            <span class="badge badge-outline">⚙ Auto Mode</span>
+          </div>
+          <p class="card-sub">Monitored relay states, sensor health, and safety lockouts enforced autonomously by the ESP32 firmware.</p>
+        </article>
+
+        <!-- Equipment Status detail -->
+        <article class="card">
+          <h2 class="card-title card-title--bold">Equipment Status</h2>
+          <p class="card-sub">Continuous hardware health &amp; relay contact states</p>
+          <div class="equip-list equip-list--detail">
+            <div class="equip-row equip-row--detail">
+              <span class="equip-icon">⚡</span>
+              <div class="equip-info">
+                <strong>Sump pump</strong>
+                <span class="equip-sub">Submersible induction motor · Relay 1 (GPIO 25)</span>
+              </div>
+              <span class="equip-state equip-state--lg" id="pipelineSumpPump">—</span>
+            </div>
+            <div class="equip-row equip-row--detail">
+              <span class="equip-icon">⊕</span>
+              <div class="equip-info">
+                <strong>Bore pump</strong>
+                <span class="equip-sub">Borewell compressor motor · Relay 2 (GPIO 26)</span>
+              </div>
+              <span class="equip-state equip-state--lg" id="pipelineBorePump">—</span>
+            </div>
+            <div class="equip-row equip-row--detail">
+              <span class="equip-icon">⇝</span>
+              <div class="equip-info">
+                <strong>Municipal valve</strong>
+                <span class="equip-sub">Motorized inflow ball valve · Relay 3 (GPIO 27)</span>
+              </div>
+              <span class="equip-state equip-state--lg" id="pipelineMunicipalValve">—</span>
+            </div>
+            <div class="equip-row equip-row--detail">
+              <span class="equip-icon">⏱</span>
+              <div class="equip-info">
+                <strong>Flow sensor (YF-S201)</strong>
+                <span class="equip-sub">Hall-effect rotary pulse · Sump: GPIO 23, Bore: GPIO 32</span>
+              </div>
+              <span class="equip-state equip-state--lg" id="pipelineFlowSensor">—</span>
+            </div>
+            <div class="equip-row equip-row--detail">
+              <span class="equip-icon">✳</span>
+              <div class="equip-info">
+                <strong>Sump sensor (JSN-SR04T)</strong>
+                <span class="equip-sub">Waterproof ultrasonic transceiver · Trig: GPIO 5, Echo: GPIO 18</span>
+              </div>
+              <span class="equip-state equip-state--lg" id="pipelineSumpSensor">—</span>
+            </div>
+            <div class="equip-row equip-row--detail">
+              <span class="equip-icon">□</span>
+              <div class="equip-info">
+                <strong>OHT sensor (HC-SR04)</strong>
+                <span class="equip-sub">Rooftop tank sonar · Trig: GPIO 4, Echo: GPIO 19</span>
+              </div>
+              <span class="equip-state equip-state--lg" id="pipelineOhtSensor">—</span>
+            </div>
+            <div class="equip-row equip-row--detail">
+              <span class="equip-icon">+</span>
+              <div class="equip-info">
+                <strong>Pipeline status</strong>
+                <span class="equip-sub">Hydraulic integrity &amp; blockage diagnostic</span>
+              </div>
+              <span class="equip-state equip-state--lg" id="pipelineStatus">—</span>
+            </div>
+            <div class="equip-row equip-row--detail">
+              <span class="equip-icon">⊡</span>
+              <div class="equip-info">
+                <strong>Relay IN4</strong>
+                <span class="equip-sub">Auxiliary relay (GPIO 33) · Always ON by design</span>
+              </div>
+              <span class="equip-state equip-state--lg" id="pipelineRelayIn4">—</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Safety Status & Lockouts -->
+        <article class="card">
+          <h2 class="card-title card-title--bold">Safety Status &amp; Lockouts</h2>
+          <p class="card-sub">Firmware-level hardware protections</p>
+          <div class="info-rows">
+            <div class="info-row"><span>Sump lockout</span><strong id="safetyLockoutSump">—</strong></div>
+            <div class="info-row"><span>Bore lockout</span><strong id="safetyLockoutBore">—</strong></div>
+            <div class="info-row"><span>Sump sensor</span><strong id="safetySensorSump" class="txt-green">—</strong></div>
+            <div class="info-row"><span>OHT sensor</span><strong id="safetySensorOht" class="txt-green">—</strong></div>
+            <div class="info-row"><span>Municipal filling</span><strong id="safetyMunicipal">—</strong></div>
+            <div class="info-row"><span>OHT filling</span><strong id="safetyOhtFilling">—</strong></div>
+          </div>
+          <div class="flow-readings-box">
+            <div class="info-row"><span>Sump flow rate</span><strong id="pipelineSumpFlow">—</strong></div>
+            <div class="info-row"><span>Bore flow rate</span><strong id="pipelineBoreFlow">—</strong></div>
+          </div>
+        </article>
+
+        <!-- Manual Control Panel — read-only notice since no backend control API -->
+        <article class="card card--muted">
+          <h2 class="card-title card-title--bold">Manual Control Panel</h2>
+          <div class="notice-box">
+            <span class="notice-icon">⚠</span>
+            Manual relay override requires a control API on the ESP32. The current firmware uploads telemetry only — relay commands via the web dashboard are not available. The ESP32 operates autonomously.
+          </div>
+        </article>
       </section>
 
-      <section class="card status-card">
-        <div class="section-heading">
-          <div><p class="eyebrow">LIVE STATUS</p><h2>Pumps and valve</h2></div>
-          <span id="updatedAt" class="updated">Waiting for data</span>
-        </div>
-        <div class="state-grid">
-          <div class="state-row"><span>Sump pump</span><strong id="sumpPump">—</strong></div>
-          <div class="state-row"><span>Borewell pump</span><strong id="borePump">—</strong></div>
-          <div class="state-row"><span>Municipal valve</span><strong id="municipalValve">—</strong></div>
-          <div class="state-row"><span>Municipal filling</span><strong id="municipalFilling">—</strong></div>
-          <div class="state-row"><span>Relay IN4</span><strong id="relayIn4">—</strong></div>
-          <div class="state-row"><span>Sump available</span><strong id="sumpAvailable">—</strong></div>
-          <div class="state-row"><span>OHT filling</span><strong id="ohtFilling">—</strong></div>
-          <div class="state-row"><span>Sump lockout</span><strong id="sumpLockout">—</strong></div>
-          <div class="state-row"><span>Borewell lockout</span><strong id="boreLockout">—</strong></div>
-        </div>
+      <!-- ════════════ TAB: STATUS (Analytics & History) ════════════ -->
+      <section id="tabStatus" class="tab-page" aria-label="Analytics and history" hidden>
+        <article class="card">
+          <div class="card-header">
+            <div class="card-icon-row">
+              <span class="card-icon card-icon--blue" aria-hidden="true">📊</span>
+              <h2 class="card-title">Transmission Analytics &amp; Consumption</h2>
+            </div>
+          </div>
+          <p class="card-sub">Historical water usage metrics, pump run durations, source breakdown, and anomaly tally.</p>
+          <div class="metrics-grid metrics-grid--2">
+            <div class="metric-cell">
+              <span class="metric-label">TOTAL TRANSMITTED</span>
+              <strong class="metric-value" id="analyticsTotalPumped">—</strong>
+              <span class="metric-hint" id="analyticsAvgDay">Session average: —</span>
+            </div>
+            <div class="metric-cell">
+              <span class="metric-label">ACTIVE SOURCE</span>
+              <strong class="metric-value metric-value--blue" id="analyticsSource">—</strong>
+              <span class="metric-hint" id="analyticsSourceHint">—</span>
+            </div>
+            <div class="metric-cell">
+              <span class="metric-label">BLOCKAGE WARNINGS</span>
+              <strong class="metric-value" id="analyticsBlockageCount">0</strong>
+              <span class="metric-hint" id="analyticsBlockageHint">—</span>
+            </div>
+            <div class="metric-cell">
+              <span class="metric-label">LEAK WARNINGS</span>
+              <strong class="metric-value" id="analyticsLeakCount">0</strong>
+              <span class="metric-hint" id="analyticsLeakHint">—</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Flow chart placeholder (live data, session only) -->
+        <article class="card">
+          <h2 class="card-title card-title--bold">Live Flow Rate</h2>
+          <p class="card-sub">Real-time flow readings for current session (L/min)</p>
+          <div class="chart-area" id="flowChartArea">
+            <canvas id="flowChart" width="600" height="200" aria-label="Flow rate chart"></canvas>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-dot legend-dot--teal"></span> Sump flow
+            <span class="legend-dot legend-dot--blue" style="margin-left:16px"></span> Bore flow
+          </div>
+        </article>
+
+        <!-- Source-wise usage -->
+        <article class="card">
+          <h2 class="card-title card-title--bold">Source-Wise Water Usage</h2>
+          <p class="card-sub">Proportion of water extracted from each source (current session)</p>
+          <div class="donut-area">
+            <canvas id="sourceDonut" width="260" height="200" aria-label="Source distribution donut chart"></canvas>
+            <div class="donut-legend" id="donutLegend">
+              <div class="legend-row"><span class="legend-dot legend-dot--blue"></span> Sump Tank (<span id="legSump">—</span>%)</div>
+              <div class="legend-row"><span class="legend-dot legend-dot--teal"></span> Borewell (<span id="legBore">—</span>%)</div>
+              <div class="legend-row"><span class="legend-dot legend-dot--purple"></span> Municipal (<span id="legMuni">—</span>%)</div>
+            </div>
+          </div>
+        </article>
       </section>
 
-      <p id="errorMessage" class="error-message" role="status"></p>
-      <footer>Read-only dashboard · updated from Firebase Realtime Database</footer>
+      <!-- ════════════ TAB: BLUETOOTH & WI-FI ════════════ -->
+      <section id="tabBluetooth" class="tab-page" aria-label="Bluetooth and Wi-Fi" hidden>
+        <article class="card">
+          <div class="card-icon-row">
+            <span class="card-icon card-icon--blue" aria-hidden="true">✦</span>
+            <h2 class="card-title">Bluetooth &amp; Wi-Fi Provisioning</h2>
+          </div>
+          <p class="card-sub">Configure local hardware communication links, pair via Bluetooth Low Energy (BLE), and provision router credentials to the ESP32.</p>
+        </article>
+
+        <!-- Bluetooth status -->
+        <article class="card">
+          <h2 class="card-title card-title--bold">Bluetooth</h2>
+          <p class="card-sub">BLE is the local provisioning and fallback control link.</p>
+          <div class="info-rows">
+            <div class="info-row"><span>Device</span><strong>LIQUORA-ESP32</strong></div>
+            <div class="info-row"><span>BLE status</span><strong class="txt-muted">Disconnected</strong></div>
+            <div class="info-row"><span>Remote ID</span><strong class="txt-muted">Not saved</strong></div>
+          </div>
+          <div class="notice-box notice-box--info">
+            <strong>Hardware Integration Note:</strong> Web Bluetooth requires Chrome, Edge, or Opera on Windows/Mac/Android over HTTPS or localhost. The current firmware does not include BLE provisioning — BLE status is unavailable.
+          </div>
+        </article>
+
+        <!-- Wi-Fi status (derived from Firebase connectivity) -->
+        <article class="card">
+          <h2 class="card-title card-title--bold">Wi-Fi Provisioning</h2>
+          <p class="card-sub">The ESP32 uploads telemetry via Wi-Fi to Firebase. Connection state is inferred from data freshness.</p>
+          <div class="info-rows">
+            <div class="info-row"><span>Wi-Fi status</span><strong id="wifiConnStatus" class="txt-green">—</strong></div>
+            <div class="info-row"><span>Firebase project</span><strong class="txt-muted">test-base-2fb81</strong></div>
+            <div class="info-row"><span>Database path</span><strong class="txt-muted">liquora/telemetry</strong></div>
+            <div class="info-row"><span>Last successful data</span><strong id="wifiLastConn">—</strong></div>
+          </div>
+        </article>
+
+        <!-- Settings -->
+        <article class="card" id="settingsCard">
+          <div class="card-icon-row">
+            <span class="card-icon card-icon--blue" aria-hidden="true">⚙</span>
+            <h2 class="card-title">System Settings &amp; Hardware Integration</h2>
+          </div>
+          <p class="card-sub">Configure hydraulic parameters, sensor thresholds, blockage detection timers, and demo mode.</p>
+
+          <div class="settings-section">
+            <h3 class="settings-heading">Tank Capacities</h3>
+            <label class="field-label">Sump Tank Total Capacity (Litres)
+              <input type="number" id="settingSumpCapacity" class="field-input" value="2000" min="100" max="50000" aria-label="Sump tank capacity in litres" />
+            </label>
+            <label class="field-label">Overhead Tank (OHT) Capacity (Litres)
+              <input type="number" id="settingOhtCapacity" class="field-input" value="2000" min="100" max="50000" aria-label="OHT capacity in litres" />
+            </label>
+          </div>
+
+          <div class="settings-section">
+            <h3 class="settings-heading">Flow &amp; Blockage Thresholds</h3>
+            <label class="field-label">Nominal Expected Flow Rate (L/min)
+              <span class="field-hint">Reference flow throughput when pump is operating normally without resistance.</span>
+              <input type="number" id="settingNominalFlow" class="field-input" value="15" min="1" max="200" step="0.5" aria-label="Nominal flow rate" />
+            </label>
+            <label class="field-label">Low-Flow Alarm Threshold (L/min)
+              <span class="field-hint">Flow below this limit triggers Low-Flow warning (indicates pipe scaling or suction leak).</span>
+              <input type="number" id="settingLowFlow" class="field-input" value="5" min="0.1" max="100" step="0.5" aria-label="Low flow alarm threshold" />
+            </label>
+            <label class="field-label">Blockage Detection Delay (Seconds)
+              <span class="field-hint">Duration of zero/near-zero flow while pump runs before triggering Possible Blockage.</span>
+              <input type="number" id="settingBlockageDelay" class="field-input" value="10" min="5" max="300" aria-label="Blockage detection delay seconds" />
+            </label>
+          </div>
+
+          <div class="settings-section">
+            <div class="toggle-row">
+              <div>
+                <strong>Demo Mode (Hardware Simulation)</strong>
+                <p class="card-sub">Generates realistic tank, flow, and pump telemetry for UI evaluation when hardware is disconnected.</p>
+              </div>
+              <label class="toggle-switch" aria-label="Demo mode toggle">
+                <input type="checkbox" id="settingDemoMode" role="switch" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <div>
+                <strong>Audible Beep Alarm on Blockage</strong>
+                <p class="card-sub">Plays browser audio chime when critical blockage is detected.</p>
+              </div>
+              <label class="toggle-switch" aria-label="Audible alarm toggle">
+                <input type="checkbox" id="settingAudibleAlarm" checked role="switch" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="saveSettingsBtn">Save &amp; Apply Settings</button>
+        </article>
+      </section>
+
     </main>
+
+    <!-- ──────────────── BOTTOM NAV ──────────────── -->
+    <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+      <button class="nav-btn active" data-tab="tabControl" aria-label="Dashboard" aria-current="page" id="navControl">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Control</span>
+      </button>
+      <button class="nav-btn" data-tab="tabTanks" aria-label="Tanks" id="navTanks">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 6V4M16 6V4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 14h16" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/></svg>
+        <span>Tanks</span>
+      </button>
+      <button class="nav-btn" data-tab="tabPipeline" aria-label="Pipeline" id="navPipeline">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12h20M12 2v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Pipeline</span>
+      </button>
+      <button class="nav-btn" data-tab="tabStatus" aria-label="Analytics" id="navStatus">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="14" width="3" height="7" rx="1" fill="currentColor"/><rect x="9" y="10" width="3" height="11" rx="1" fill="currentColor"/><rect x="15" y="6" width="3" height="15" rx="1" fill="currentColor"/><rect x="21" y="2" width="3" height="19" rx="1" fill="currentColor" opacity="0.4"/></svg>
+        <span>Status</span>
+      </button>
+      <button class="nav-btn" data-tab="tabBluetooth" aria-label="Bluetooth and Wi-Fi" id="navBluetooth">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 2v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17.5 6.5L12 12l5.5 5.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        <span>Bluetooth &amp; Wi-Fi</span>
+      </button>
+    </nav>
+
+    <script type="module" src="app.js"></script>
   </body>
 </html>
